@@ -14,11 +14,12 @@ int main(int argc, char* argv[])
 
 	if (r) {
 		fprintf(stderr, "error parsing config stream\n");
-		return -1;
+		goto out;
 	}
 
 	_print_nodes(&c, 1);
-	conf_cleanup(&c);
 
-	return 0;
+out:
+	conf_cleanup(&c);
+	return r;
 }

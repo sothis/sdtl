@@ -1,0 +1,11 @@
+All files in the sdtl source code distribution, being the sdtl source code
+repository maintained by Janos Laube <janos.dev@gmail.com>, are published and
+distributed with respect to the terms of the Creative Commons CC0 Public Domain
+Dedication.
+
+If files do not contain a CC0 notice or any other license text, they are
+published and distributed under CC0. The CC0 Public Domain Dedication can be
+found under './doc/copying.txt'.
+
+
+This work is published from Germany.

@@ -266,9 +266,16 @@ install: all
 Release: release
 Debug: debug
 
+coverity: clean
+	cov-build --dir cov-int make
+	tar caf build/$(PROJECT_NAME).xz cov-int
+
+.PHONY: coverity
+
 clean:
 	@echo "deleting '$(OUTDIR)'"
 	@-rm -rf $(OUTDIR)
+	@-rm -rf cov-int
 
 all-recursive:
 ifdef HAVE_GCC

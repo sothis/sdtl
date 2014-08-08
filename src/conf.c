@@ -412,9 +412,9 @@ int _on_sdtl_event(void* userdata, sdtl_event_t e, sdtl_data_t* data)
 					c->current_array_items;
 			}
 			break;
+		/* disallow octet streams in config files */
 		case ev_octet_stream_start:
 		case ev_octet_stream_end:
-			/* disallow octet streams */
 		default:
 			return -1;
 	}
@@ -535,7 +535,7 @@ const conf_node_t* _find_node_by_key(const conf_node_t* first, const char* key)
 	}
 	printf("\n");
 	return res;
-}l
+}
 
 const void* get_value_by_key(const conf_t* c, const char* key)
 {

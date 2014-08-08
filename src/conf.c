@@ -422,8 +422,7 @@ int _on_sdtl_event(void* userdata, sdtl_event_t e, sdtl_data_t* data)
 	return 0;
 }
 
-void _free_nodes_recursive
-(size_t level, conf_node_t* first)
+void _free_nodes_recursive(conf_node_t* first)
 {
 	conf_node_t* e = first;
 	conf_node_t* n = 0;
@@ -431,8 +430,7 @@ void _free_nodes_recursive
 	while (e) {
 		if (e->type == node_is_struct) {
 			if (e->value) {
-				_free_nodes_recursive(level+1,
-					(conf_node_t*)e->value);
+				_free_nodes_recursive((conf_node_t*)e->value);
 				free(e->value);
 			}
 			free(e->name);
@@ -459,7 +457,7 @@ void _free_nodes_recursive
 
 void conf_cleanup(conf_t* c)
 {
-	_free_nodes_recursive(0, (conf_node_t*)c->root.value);
+	_free_nodes_recursive((conf_node_t*)c->root.value);
 	free(c->root.value);
 	memset(c, 0, sizeof(conf_t));
 }
@@ -496,4 +494,63 @@ int conf_read(conf_t* c, const char* filename)
 	if (fd < 0)
 		return -1;
 	return conf_read_fd(c, fd);
+}
+
+char* _get_key_copy(const char* key)
+{
+	char* copy = 0;
+	size_t len = 0;
+
+	len = strlen(key);
+	if ((!len) || (len > 65535))
+		return 0;
+
+	copy = (char*) calloc(len+1, sizeof(char));
+	if (!copy)
+		return 0;
+
+	memcpy(copy, key, len);
+	return copy;
+}
+
+const conf_node_t* _find_node_by_key(const conf_node_t* first, const char* key)
+{
+	const conf_node_t* e = first;
+	const conf_node_t* res = 0;
+	char* key_copy = 0;
+	char* curr = 0;
+
+	key_copy = _get_key_copy(key);
+	if (!key_copy)
+		return 0;
+
+	curr = strtok(key_copy, ".");
+	while(curr) {
+
+		if (strlen(curr)) {
+			printf("curr:'%s'\n", curr);
+
+		}
+		curr = strtok(0, ".");
+	}
+	printf("\n");
+	return res;
+}l
+
+const void* get_value_by_key(const conf_t* c, const char* key)
+{
+	const conf_node_t* root = (const conf_node_t*)c->root.value;
+	const conf_node_t* key_node = 0;
+	const void* value = 0;
+
+	if (!root)
+		return 0;
+
+	key_node = _find_node_by_key(root, key);
+	if (!key_node)
+		return 0;
+
+	value = key_node->value;
+//	printf("name:'%s'\n", key_node->name);
+	return value;
 }

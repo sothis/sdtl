@@ -17,8 +17,12 @@ int main(int argc, char* argv[])
 		goto out;
 	}
 
-	_print_nodes(&c, 1);
+	//_print_nodes(&c, 1);
 
+	const void* val = get_value_by_key(&c, ".general.username");
+
+	get_value_by_key(&c, ".user.name..");
+	printf("val: '%s'\n", (const char*)val);
 out:
 	conf_cleanup(&c);
 	return r;

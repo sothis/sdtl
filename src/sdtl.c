@@ -406,8 +406,8 @@ int _finalize_current_token
 		data.type = datatype_utf8string;
 	else
 		data.type = (data_type_t)p->token_type;
-	data.value_type = p->value_type;
 
+	data.value_type = p->value_type;
 
 
 	if (p->token_type == token_is_identifier) {
@@ -434,7 +434,6 @@ int _do_ignore_whitespace
 (sdtl_read_fd_t* p)
 {
 	/* just keep current state, do nothing */
-	p->next_state = p->next_state;
 	return 0;
 }
 
@@ -2273,6 +2272,7 @@ int sdtl_write_end_struct
 
 	if (!w->struct_nesting_level)
 		return -1;
+
 	w->struct_nesting_level--;
 
 	if (w->white) {
@@ -2293,7 +2293,8 @@ int sdtl_write_end_struct
 
 	if (!w->struct_nesting_level && w->white)
 		r = _write_byte(w, '\n');
-		w->last_was_struct = 1;
+
+	w->last_was_struct = 1;
 
 	return r;
 }

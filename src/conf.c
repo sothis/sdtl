@@ -515,7 +515,7 @@ char* _get_key_copy(const char* key)
 
 const conf_node_t* _find_node_by_key(const conf_node_t* first, const char* key)
 {
-	const conf_node_t* e = first;
+//	const conf_node_t* e = first;
 	const conf_node_t* res = 0;
 	char* key_copy = 0;
 	char* curr = 0;
@@ -533,6 +533,7 @@ const conf_node_t* _find_node_by_key(const conf_node_t* first, const char* key)
 		}
 		curr = strtok(0, ".");
 	}
+	free(key_copy);
 	printf("\n");
 	return res;
 }

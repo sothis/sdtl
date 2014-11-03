@@ -1,4 +1,4 @@
-typedef enum conf_array_type_e {
+typedef enum conf_array_type {
 	array_contains_null,
 	array_contains_long_long_int,
 	array_contains_char,
@@ -6,7 +6,7 @@ typedef enum conf_array_type_e {
 	dimension_conf_array_type
 } conf_array_type_t;
 
-typedef enum conf_node_type_e {
+typedef enum conf_node_type {
 	node_is_null,
 	node_is_string,
 	node_is_integer,
@@ -16,7 +16,7 @@ typedef enum conf_node_type_e {
 	dimension_conf_node_type
 } conf_node_type_t;
 
-typedef struct conf_node_s {
+typedef struct conf_node {
 	conf_node_type_t	type;
 	conf_array_type_t	array_type;
 	char*			name;
@@ -24,11 +24,11 @@ typedef struct conf_node_s {
 	uint64_t		length;
 	uint64_t		items_per_row;
 	int			struct_is_not_finalized;
-	struct conf_node_s*	prev_in_scope;
-	struct conf_node_s*	next_in_scope;
+	struct conf_node*	prev_in_scope;
+	struct conf_node*	next_in_scope;
 } conf_node_t;
 
-typedef struct conf_s {
+typedef struct conf {
 	int		sdtl_stream_has_started;
 	conf_node_t	root;
 	conf_node_t*	workspace;
@@ -38,8 +38,7 @@ typedef struct conf_s {
 } conf_t;
 
 
-void _indent_with_tab
-(size_t level)
+void _indent_with_tab(size_t level)
 {
 	while (level) {
 		printf("\t");
@@ -47,13 +46,12 @@ void _indent_with_tab
 	}
 }
 
-void _print_escaped_string
-(size_t level, const char* name, const char* str, int w)
+void _print_escaped_string(size_t lvl, const char* name, const char* str, int w)
 {
 	size_t i;
 	size_t l = strlen(str);
 	if (w) {
-		_indent_with_tab(level);
+		_indent_with_tab(lvl);
 		printf(".%s = \"", name);
 	} else
 		printf(".%s=\"", name);
@@ -71,8 +69,7 @@ void _print_escaped_string
 		printf("\";");
 }
 
-void _print_escaped_array_string
-(const char* str)
+void _print_escaped_array_string(const char* str)
 {
 	size_t i;
 	size_t l = strlen(str);
@@ -135,8 +132,7 @@ void _print_string_array(conf_node_t* n)
 	}
 }
 
-void _print_nodes_recursive
-(size_t level, conf_node_t* first, int w)
+void _print_nodes_recursive(size_t level, conf_node_t* first, int w)
 {
 	conf_node_t* e = first;
 	int whitespace = w;
@@ -207,8 +203,7 @@ void _print_nodes_recursive
 	}
 }
 
-void _print_nodes
-(conf_t* c, int use_whitespace)
+void _print_nodes(conf_t* c, int use_whitespace)
 {
 	printf("root has %" PRIu64 " members\n", c->root.length);
 	_print_nodes_recursive(0, (conf_node_t*)c->root.value, use_whitespace);
@@ -496,62 +491,96 @@ int conf_read(conf_t* c, const char* filename)
 	return conf_read_fd(c, fd);
 }
 
-char* _get_key_copy(const char* key)
+const conf_node_t*
+get_conf_node_flat(const conf_node_t* parent_struct, const char* name)
 {
-	char* copy = 0;
-	size_t len = 0;
+	const conf_node_t* e = parent_struct;
 
-	len = strlen(key);
-	if ((!len) || (len > 65535))
+	if (!name || !*name || (*name == '.'))
 		return 0;
 
-	copy = (char*) calloc(len+1, sizeof(char));
-	if (!copy)
-		return 0;
-
-	memcpy(copy, key, len);
-	return copy;
+	while (e) {
+		if (!strcmp(e->name, name))
+			break;
+		e = e->next_in_scope;
+	}
+	return e;
 }
 
-const conf_node_t* _find_node_by_key(const conf_node_t* first, const char* key)
+const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 {
-//	const conf_node_t* e = first;
-	const conf_node_t* res = 0;
-	char* key_copy = 0;
-	char* curr = 0;
+	char* abspath, *component, *temp;
+	const conf_node_t* root = (const conf_node_t*)c->root.value;
+	const conf_node_t* curr_node = root;
+	const conf_node_t* e = 0;
+	const conf_node_t* r = 0;
 
-	key_copy = _get_key_copy(key);
-	if (!key_copy)
+	/* only allow absolute paths (starting with dot) at the moment */
+	if (!path || !*path || (*path != '.'))
 		return 0;
 
-	curr = strtok(key_copy, ".");
-	while(curr) {
-
-		if (strlen(curr)) {
-			printf("curr:'%s'\n", curr);
-
-		}
-		curr = strtok(0, ".");
+	/* special root member case */
+	if (!strcmp(path, ".")) {
+		printf("here\n");
+		return &c->root;
 	}
-	free(key_copy);
-	printf("\n");
-	return res;
+
+	/* path mustn't end with '.', exception is a single dot for the root
+	 * structure */
+	if (*(strrchr(path, 0)-1) == '.')
+		return 0;
+
+	abspath = strdup(path);
+	if (!abspath) {
+		fprintf(stderr, "oom.\n");
+		exit(~0);
+	}
+	temp = abspath;
+	while ((component = strtok(temp, "."))) {
+		temp = 0;
+
+		if (r) {
+			if (r->type == node_is_struct) {
+				/* dive into structure */
+				curr_node = (conf_node_t*)r->value;
+			} else {
+				/* The last entity was not a structure, but
+				 * we have still components in the path.
+				 * This is exactly ENOTDIR in the context
+				 * of POSIX paths. */
+				r = 0;
+				break;
+			}
+		}
+		e = get_conf_node_flat(curr_node, component);
+		if (!e) {
+			/* no such structure member in curr_entity */
+			r = 0;
+			break;
+		} else {
+			r = e;
+			continue;
+		}
+
+	}
+
+	free(abspath);
+	return r;
 }
 
 const void* get_value_by_key(const conf_t* c, const char* key)
 {
-	const conf_node_t* root = (const conf_node_t*)c->root.value;
 	const conf_node_t* key_node = 0;
 	const void* value = 0;
 
-	if (!root)
+	if (!c || !c->root.value)
 		return 0;
 
-	key_node = _find_node_by_key(root, key);
+	key_node = get_conf_node(c, key);
 	if (!key_node)
 		return 0;
 
 	value = key_node->value;
-//	printf("name:'%s'\n", key_node->name);
+	printf("name:'%s'\n", key_node->name);
 	return value;
 }

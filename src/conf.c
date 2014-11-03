@@ -297,14 +297,16 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 		if (data->type == datatype_utf8string) {
 			cp_array = (char**)(c->workspace->value);
 			cp_array[item] = (char*) malloc(data->length + 1);
+			if (!cp_array[item])
+				return -1;
 			memmove(cp_array[item], data->data, data->length + 1);
 		}
 
 		if (data->type == datatype_number) {
 			ip_array = (int64_t**)(c->workspace->value);
-			ip_array[item] = (int64_t*)
-				malloc(sizeof(int64_t));
-
+			ip_array[item] = (int64_t*) malloc(sizeof(int64_t));
+			if (!ip_array[item])
+				return -1;
 			end = 0;
 			i = (int64_t)strtoll((const char*)data->data, &end, 10);
 			if ((!end) || (*end != 0) ||
@@ -417,6 +419,21 @@ int _on_sdtl_event(void* userdata, sdtl_event_t e, sdtl_data_t* data)
 	return 0;
 }
 
+void _free_array_values(conf_node_t* n)
+{
+	uint64_t row, column;
+	void* v;
+	void** values = (void**)n->value;
+
+	for (row = 0; row < n->length; ++row) {
+		for (column = 0; column < n->items_per_row; ++column) {
+			v = values[row*n->items_per_row + column];
+			if (v)
+				free(v);
+		}
+	}
+}
+
 void _free_nodes_recursive(conf_node_t* first)
 {
 	conf_node_t* e = first;
@@ -439,6 +456,7 @@ void _free_nodes_recursive(conf_node_t* first)
 			free(e->name);
 			free(e->value);
 		} else if (e->type == node_is_array) {
+			_free_array_values(e);
 			free(e->name);
 			free(e->value);
 		}
@@ -574,20 +592,15 @@ const void* get_value_by_key(const conf_t* c, const char* key)
 		return 0;
 
 	key_node = get_conf_node(c, key);
-	if (!key_node) {
-		fprintf(stderr, "key not found\n");
+	if (!key_node)
 		return 0;
-	}
-	if (key_node->type == node_is_null) {
-		printf("null value\n");
-	}
 
 	value = key_node->value;
 
 	return value;
 }
 
-const char* get_value_by_key_utf8string(const conf_t* c, const char* key)
+const char* get_utf8string_by_key(const conf_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 
@@ -604,7 +617,30 @@ const char* get_value_by_key_utf8string(const conf_t* c, const char* key)
 		return 0;
 }
 
-const int64_t* get_value_by_key_int64(const conf_t* c, const char* key)
+const char** get_utf8string_array_by_key
+(const conf_t* c, const char* key, uint64_t* rows, uint64_t* columns)
+{
+	const conf_node_t* key_node = 0;
+
+	if (!c || !c->root.value)
+		return 0;
+
+	key_node = get_conf_node(c, key);
+	if (!key_node)
+		return 0;
+
+	if (key_node->type == node_is_array &&
+	key_node->array_type == array_contains_char) {
+		if (rows)
+			*rows = key_node->length;
+		if (columns)
+			*columns = key_node->items_per_row;
+		return (const char**) key_node->value;
+	} else
+		return 0;
+}
+
+const int64_t* get_int64_by_key(const conf_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 

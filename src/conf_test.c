@@ -27,14 +27,14 @@ int main(int argc, char* argv[])
 	}
 
 	if (key) {
-		const void* val = get_value_by_key(&c, key);
-		if (!val) {
-			fprintf(stderr, "key not found.\n");
-			goto out;
-		}
+		const int64_t* intval = get_value_by_key_int64(&c, key);
+		const char* strval = get_value_by_key_utf8string(&c, key);
 
-	//	printf("val: '%s'\n", (const char*)val);
-		printf("val: %" PRIi64 "\n", *(int64_t*)val);
+		if (strval)
+			printf("val: '%s'\n", strval);
+		if (intval)
+			printf("val: %" PRIi64 "\n", *intval);
+
 	}
 out:
 	conf_cleanup(&c);

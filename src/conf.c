@@ -510,8 +510,8 @@ get_conf_node_flat(const conf_node_t* parent_struct, const char* name)
 const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 {
 	char* abspath, *component, *temp;
-	const conf_node_t* root = (const conf_node_t*)c->root.value;
-	const conf_node_t* curr_node = root;
+	const conf_node_t* first = (const conf_node_t*)c->root.value;
+	const conf_node_t* curr_node = first;
 	const conf_node_t* e = 0;
 	const conf_node_t* r = 0;
 
@@ -521,7 +521,6 @@ const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 
 	/* special root member case */
 	if (!strcmp(path, ".")) {
-		printf("here\n");
 		return &c->root;
 	}
 
@@ -531,10 +530,9 @@ const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 		return 0;
 
 	abspath = strdup(path);
-	if (!abspath) {
-		fprintf(stderr, "oom.\n");
-		exit(~0);
-	}
+	if (!abspath)
+		return 0;
+
 	temp = abspath;
 	while ((component = strtok(temp, "."))) {
 		temp = 0;
@@ -544,8 +542,8 @@ const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 				/* dive into structure */
 				curr_node = (conf_node_t*)r->value;
 			} else {
-				/* The last entity was not a structure, but
-				 * we have still components in the path.
+				/* The current node is not a structure, but
+				 * we still have components in the path.
 				 * This is exactly ENOTDIR in the context
 				 * of POSIX paths. */
 				r = 0;
@@ -554,14 +552,13 @@ const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 		}
 		e = get_conf_node_flat(curr_node, component);
 		if (!e) {
-			/* no such structure member in curr_entity */
+			/* no such structure member in curr_node */
 			r = 0;
 			break;
 		} else {
 			r = e;
 			continue;
 		}
-
 	}
 
 	free(abspath);
@@ -577,10 +574,49 @@ const void* get_value_by_key(const conf_t* c, const char* key)
 		return 0;
 
 	key_node = get_conf_node(c, key);
+	if (!key_node) {
+		fprintf(stderr, "key not found\n");
+		return 0;
+	}
+	if (key_node->type == node_is_null) {
+		printf("null value\n");
+	}
+
+	value = key_node->value;
+
+	return value;
+}
+
+const char* get_value_by_key_utf8string(const conf_t* c, const char* key)
+{
+	const conf_node_t* key_node = 0;
+
+	if (!c || !c->root.value)
+		return 0;
+
+	key_node = get_conf_node(c, key);
 	if (!key_node)
 		return 0;
 
-	value = key_node->value;
-	printf("name:'%s'\n", key_node->name);
-	return value;
+	if (key_node->type == node_is_string)
+		return (const char*) key_node->value;
+	else
+		return 0;
+}
+
+const int64_t* get_value_by_key_int64(const conf_t* c, const char* key)
+{
+	const conf_node_t* key_node = 0;
+
+	if (!c || !c->root.value)
+		return 0;
+
+	key_node = get_conf_node(c, key);
+	if (!key_node)
+		return 0;
+
+	if (key_node->type == node_is_integer)
+		return (int64_t*)key_node->value;
+	else
+		return 0;
 }

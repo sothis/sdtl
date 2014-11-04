@@ -320,8 +320,13 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 	}
 
 	switch (data->type) {
+		/* note: we ignore data->value_type (the type tag) here
+		 * and assume following defaults:
+		 * - strings are interpreted as SDTL default, which is UTF-8
+		 * - integers are stored as int64_t with correspondent range
+		 * limitations
+		 * */
 		case datatype_utf8string:
-			/* note: we loose data->string_type here */
 			c->workspace->type = node_is_string;
 			c->workspace->length = data->length + 1;
 			c->workspace->value = malloc(c->workspace->length);
@@ -331,8 +336,6 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 				c->workspace->length);
 			break;
 		case datatype_number:
-			/* note: only supporting strtoll numbers and range
-			 * for now */
 			c->workspace->type = node_is_integer;
 			c->workspace->length = sizeof(int64_t);
 			c->workspace->value = malloc(c->workspace->length);
@@ -348,7 +351,7 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 			memmove(c->workspace->value, &i, c->workspace->length);
 			break;
 		case datatype_unit:
-			/* note: we don't care about units at the moment */
+			/* note: we don't care about units for now */
 			break;
 		case datatype_null_value:
 			c->workspace->type = node_is_null;

@@ -3,20 +3,25 @@
 
 int main(int argc, char* argv[])
 {
-	conf_t		conf;
+	conf_t		config;
 	int		r = -1;
 	uint64_t	rows, cols;
+	const char*	username = 0;
 	const char**	str_array = 0;
 	const int64_t**	int_array = 0;
 
-	r = conf_read(&conf, "examples/test.conf");
+	r = conf_read(&config, "examples/test.conf");
 	if (r) {
 		fprintf(stderr, "error parsing config stream\n");
 		goto out;
 	}
 
 
-	str_array = conf_get_utf8string_array_by_key(&conf,
+	username = conf_get_utf8string_by_key(&config, ".general.username");
+	if (username)
+		printf("user: '%s'\n", username);
+
+	str_array = conf_get_utf8string_array_by_key(&config,
 			".general.endpoints", &rows, &cols);
 
 	for (uint64_t i = 0; i < rows; ++i) {
@@ -28,7 +33,7 @@ int main(int argc, char* argv[])
 
 	printf("\n");
 
-	int_array = conf_get_int64_array_by_key(&conf,
+	int_array = conf_get_int64_array_by_key(&config,
 			".general.arr", &rows, &cols);
 
 	for (uint64_t i = 0; i < rows; ++i) {
@@ -39,6 +44,6 @@ int main(int argc, char* argv[])
 	}
 
 out:
-	conf_cleanup(&conf);
+	conf_cleanup(&config);
 	return r;
 }

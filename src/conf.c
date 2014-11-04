@@ -510,7 +510,7 @@ int conf_read(conf_t* c, const char* filename)
 }
 
 const conf_node_t*
-get_conf_node_flat(const conf_node_t* parent_struct, const char* name)
+_get_conf_node_flat(const conf_node_t* parent_struct, const char* name)
 {
 	const conf_node_t* e = parent_struct;
 
@@ -525,7 +525,7 @@ get_conf_node_flat(const conf_node_t* parent_struct, const char* name)
 	return e;
 }
 
-const conf_node_t* get_conf_node(const conf_t* c, const char* path)
+const conf_node_t* conf_get_conf_node(const conf_t* c, const char* path)
 {
 	char* abspath, *component, *temp;
 	const conf_node_t* first = (const conf_node_t*)c->root.value;
@@ -568,7 +568,7 @@ const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 				break;
 			}
 		}
-		e = get_conf_node_flat(curr_node, component);
+		e = _get_conf_node_flat(curr_node, component);
 		if (!e) {
 			/* no such structure member in curr_node */
 			r = 0;
@@ -583,31 +583,14 @@ const conf_node_t* get_conf_node(const conf_t* c, const char* path)
 	return r;
 }
 
-const void* get_value_by_key(const conf_t* c, const char* key)
-{
-	const conf_node_t* key_node = 0;
-	const void* value = 0;
-
-	if (!c || !c->root.value)
-		return 0;
-
-	key_node = get_conf_node(c, key);
-	if (!key_node)
-		return 0;
-
-	value = key_node->value;
-
-	return value;
-}
-
-const char* get_utf8string_by_key(const conf_t* c, const char* key)
+const char* conf_get_utf8string_by_key(const conf_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 
 	if (!c || !c->root.value)
 		return 0;
 
-	key_node = get_conf_node(c, key);
+	key_node = conf_get_conf_node(c, key);
 	if (!key_node)
 		return 0;
 
@@ -617,7 +600,7 @@ const char* get_utf8string_by_key(const conf_t* c, const char* key)
 		return 0;
 }
 
-const char** get_utf8string_array_by_key
+const char** conf_get_utf8string_array_by_key
 (const conf_t* c, const char* key, uint64_t* rows, uint64_t* columns)
 {
 	const conf_node_t* key_node = 0;
@@ -625,7 +608,7 @@ const char** get_utf8string_array_by_key
 	if (!c || !c->root.value)
 		return 0;
 
-	key_node = get_conf_node(c, key);
+	key_node = conf_get_conf_node(c, key);
 	if (!key_node)
 		return 0;
 
@@ -640,14 +623,14 @@ const char** get_utf8string_array_by_key
 		return 0;
 }
 
-const int64_t* get_int64_by_key(const conf_t* c, const char* key)
+const int64_t* conf_get_int64_by_key(const conf_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 
 	if (!c || !c->root.value)
 		return 0;
 
-	key_node = get_conf_node(c, key);
+	key_node = conf_get_conf_node(c, key);
 	if (!key_node)
 		return 0;
 
@@ -657,7 +640,7 @@ const int64_t* get_int64_by_key(const conf_t* c, const char* key)
 		return 0;
 }
 
-const int64_t** get_int64_array_by_key
+const int64_t** conf_get_int64_array_by_key
 (const conf_t* c, const char* key, uint64_t* rows, uint64_t* columns)
 {
 	const conf_node_t* key_node = 0;
@@ -665,7 +648,7 @@ const int64_t** get_int64_array_by_key
 	if (!c || !c->root.value)
 		return 0;
 
-	key_node = get_conf_node(c, key);
+	key_node = conf_get_conf_node(c, key);
 	if (!key_node)
 		return 0;
 

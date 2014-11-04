@@ -16,8 +16,8 @@ int main(int argc, char* argv[])
 	}
 
 
-	str_array = get_utf8string_array_by_key(&conf, ".general.endpoints",
-		&rows, &cols);
+	str_array = conf_get_utf8string_array_by_key(&conf,
+			".general.endpoints", &rows, &cols);
 
 	for (uint64_t i = 0; i < rows; ++i) {
 		for (uint64_t j = 0; j < cols; ++j) {
@@ -28,7 +28,8 @@ int main(int argc, char* argv[])
 
 	printf("\n");
 
-	int_array = get_int64_array_by_key(&conf, ".general.arr", &rows, &cols);
+	int_array = conf_get_int64_array_by_key(&conf,
+			".general.arr", &rows, &cols);
 
 	for (uint64_t i = 0; i < rows; ++i) {
 		for (uint64_t j = 0; j < cols; ++j) {

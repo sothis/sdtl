@@ -656,3 +656,26 @@ const int64_t* get_int64_by_key(const conf_t* c, const char* key)
 	else
 		return 0;
 }
+
+const int64_t** get_int64_array_by_key
+(const conf_t* c, const char* key, uint64_t* rows, uint64_t* columns)
+{
+	const conf_node_t* key_node = 0;
+
+	if (!c || !c->root.value)
+		return 0;
+
+	key_node = get_conf_node(c, key);
+	if (!key_node)
+		return 0;
+
+	if (key_node->type == node_is_array &&
+	key_node->array_type == array_contains_long_long_int) {
+		if (rows)
+			*rows = key_node->length;
+		if (columns)
+			*columns = key_node->items_per_row;
+		return (const int64_t**) key_node->value;
+	} else
+		return 0;
+}

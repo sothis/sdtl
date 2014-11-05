@@ -9,6 +9,7 @@ typedef enum conf_array_type {
 typedef enum conf_node_type {
 	node_is_null,
 	node_is_string,
+	node_is_enum,
 	node_is_integer,
 	node_is_struct,
 	node_is_array,
@@ -359,6 +360,14 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 			c->workspace->value = 0;
 			break;
 		case datatype_enum:
+			c->workspace->type = node_is_enum;
+			c->workspace->length = data->length + 1;
+			c->workspace->value = malloc(c->workspace->length);
+			if (!c->workspace->value)
+				return -1;
+			memmove(c->workspace->value, data->data,
+				c->workspace->length);
+			break;
 		case datatype_symlink:
 		case datatype_octet_stream:
 		default:
@@ -598,6 +607,23 @@ const char* conf_get_utf8string_by_key(const conf_t* c, const char* key)
 		return 0;
 
 	if (key_node->type == node_is_string)
+		return (const char*) key_node->value;
+	else
+		return 0;
+}
+
+const char* conf_get_enum_by_key(const conf_t* c, const char* key)
+{
+	const conf_node_t* key_node = 0;
+
+	if (!c || !c->root.value)
+		return 0;
+
+	key_node = conf_get_conf_node(c, key);
+	if (!key_node)
+		return 0;
+
+	if (key_node->type == node_is_enum)
 		return (const char*) key_node->value;
 	else
 		return 0;

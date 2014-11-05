@@ -7,6 +7,7 @@ int main(int argc, char* argv[])
 	int		r = -1;
 	uint64_t	rows, cols;
 	const char*	username = 0;
+	const char*	enumeration = 0;
 	const char**	str_array = 0;
 	const int64_t**	int_array = 0;
 
@@ -15,6 +16,10 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "error parsing config stream\n");
 		goto out;
 	}
+
+	enumeration = conf_get_enum_by_key(&config, ".general.enumeration");
+	if (enumeration)
+		printf("enumeration: '%s'\n", enumeration);
 
 
 	username = conf_get_utf8string_by_key(&config, ".general.username");

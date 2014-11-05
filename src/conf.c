@@ -464,6 +464,9 @@ void _free_nodes_recursive(conf_node_t* first)
 		} else if (e->type == node_is_string) {
 			free(e->name);
 			free(e->value);
+		} else if (e->type == node_is_enum) {
+			free(e->name);
+			free(e->value);
 		} else if (e->type == node_is_integer) {
 			free(e->name);
 			free(e->value);

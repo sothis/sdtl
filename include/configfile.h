@@ -70,7 +70,7 @@
 #endif /* _WIN32 */
 
 #if defined(__cplusplus)
-namespace sdtl {
+//namespace sdtl {
 #endif
 
 #define uint8_max	((uint8_t)~0)
@@ -2436,7 +2436,7 @@ int sdtl_write_chunk
 }
 
 #if defined(__cplusplus)
-}
+//}
 #endif
 
 #include <limits.h>
@@ -2450,7 +2450,7 @@ int sdtl_write_chunk
 #endif
 
 #if defined(__cplusplus)
-namespace sdtl {
+//namespace sdtl {
 #if !defined (_MSC_VER)
 #define PRIi64	"li"
 #define PRIu64	"lu"
@@ -3158,7 +3158,7 @@ const int64_t** conf_get_int64_array_by_key
 }
 
 #if defined(__cplusplus)
-}
+//}
 #endif
 
 #endif /* _CONFIGFILE_H */

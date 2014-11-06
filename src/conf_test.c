@@ -6,6 +6,7 @@ int main(int argc, char* argv[])
 	conf_t		config;
 	int		r = -1;
 	uint64_t	rows, cols;
+	const int64_t*	octal = 0;
 	const char*	username = 0;
 	const char*	enumeration = 0;
 	const char**	str_array = 0;
@@ -16,6 +17,10 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "error parsing config stream\n");
 		goto out;
 	}
+
+	octal = conf_get_int64_by_key(&config, ".general.octal");
+	if (octal)
+		printf("octal: '%" PRIi64 "'\n", *octal);
 
 	enumeration = conf_get_enum_by_key(&config, ".general.enumeration");
 	if (enumeration)

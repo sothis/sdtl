@@ -85,7 +85,6 @@ public functions:
 		#define _POSIX_C_SOURCE	200112L
 		#define _GNU_SOURCE 1
 		#define _BSD_SOURCE 1
-		#include "uintx.h"
 		#include <stdint.h>
 		#include <stdlib.h>
 		#include <fcntl.h>

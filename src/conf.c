@@ -309,7 +309,7 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 			if (!ip_array[item])
 				return -1;
 			end = 0;
-			i = (int64_t)strtoll((const char*)data->data, &end, 10);
+			i = (int64_t)strtoll((const char*)data->data, &end, 0);
 			if ((!end) || (*end != 0) ||
 			(i == LLONG_MIN) || (i == LLONG_MAX)) {
 				return -1;

@@ -1,5 +1,4 @@
-#include "conf.h"
-#include <stdio.h>
+#include "configfile.h"
 
 int main(int argc, char* argv[])
 {
@@ -27,7 +26,7 @@ int main(int argc, char* argv[])
 		printf("enumeration: '%s'\n", enumeration);
 
 
-	username = conf_get_utf8string_by_key(&config, ".general.username");
+	username = conf_get_utf8string_by_key(&config, ".general.usernäme");
 	if (username)
 		printf("user: '%s'\n", username);
 
@@ -49,7 +48,7 @@ int main(int argc, char* argv[])
 	for (uint64_t i = 0; i < rows; ++i) {
 		for (uint64_t j = 0; j < cols; ++j) {
 			const int64_t* val = int_array[i*cols + j];
-			if (val) printf("%" PRIu64 "\n", *val);
+			if (val) printf("%" PRIi64 "\n", *val);
 		}
 	}
 

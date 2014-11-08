@@ -1,8 +1,8 @@
-#include "configfile.h"
+#include "conf.h"
 
 int main(int argc, char* argv[])
 {
-	conf_t		config;
+	sdtlconf_ctx_t	config;
 	int		r = -1;
 	uint64_t	rows, cols;
 	const int64_t*	octal = 0;

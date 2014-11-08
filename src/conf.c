@@ -29,14 +29,14 @@ typedef struct conf_node {
 	struct conf_node*	next_in_scope;
 } conf_node_t;
 
-typedef struct conf {
+typedef struct sdtlconf_ctx {
 	int		sdtl_stream_has_started;
 	conf_node_t	root;
 	conf_node_t*	workspace;
 	uint64_t	current_array_items;
 	uint64_t	nopen_scopes;
 	conf_node_t*	open_scopes[_CONF_MAX_STRUCT_NESTING+1];
-} conf_t;
+} sdtlconf_ctx_t;
 
 
 void _indent_with_tab(size_t level)
@@ -204,13 +204,13 @@ void _print_nodes_recursive(size_t level, conf_node_t* first, int w)
 	}
 }
 
-void _print_nodes(conf_t* c, int use_whitespace)
+void _print_nodes(sdtlconf_ctx_t* c, int use_whitespace)
 {
 	printf("root has %" PRIu64 " members\n", c->root.length);
 	_print_nodes_recursive(0, (conf_node_t*)c->root.value, use_whitespace);
 }
 
-int _start_new_node(conf_t* c, const char* name, uint16_t length)
+int _start_new_node(sdtlconf_ctx_t* c, const char* name, uint16_t length)
 {
 	conf_node_t* previous_node = c->workspace;
 
@@ -233,13 +233,13 @@ int _start_new_node(conf_t* c, const char* name, uint16_t length)
 	return 0;
 }
 
-void _increase_current_struct_member_count(conf_t* c)
+void _increase_current_struct_member_count(sdtlconf_ctx_t* c)
 {
 	conf_node_t* current_scope = c->open_scopes[c->nopen_scopes-1];
 	current_scope->length++;
 }
 
-int _enter_scope(conf_t* c)
+int _enter_scope(sdtlconf_ctx_t* c)
 {
 	/* full */
 	if (c->nopen_scopes == sizeof(c->open_scopes)/sizeof(conf_node_t*)) {
@@ -253,7 +253,7 @@ int _enter_scope(conf_t* c)
 	return 0;
 }
 
-int _leave_scope(conf_t* c)
+int _leave_scope(sdtlconf_ctx_t* c)
 {
 	/* empty */
 	if (!c->nopen_scopes)
@@ -264,7 +264,7 @@ int _leave_scope(conf_t* c)
 	return 0;
 }
 
-int _add_data(conf_t* c, sdtl_data_t* data)
+int _add_data(sdtlconf_ctx_t* c, sdtl_data_t* data)
 {
 	int64_t i;
 	char* end = 0;
@@ -378,7 +378,7 @@ int _add_data(conf_t* c, sdtl_data_t* data)
 
 int _on_sdtl_event(void* userdata, sdtl_event_t e, sdtl_data_t* data)
 {
-	conf_t* c = (conf_t*)userdata;
+	sdtlconf_ctx_t* c = (sdtlconf_ctx_t*)userdata;
 
 	if (!c->sdtl_stream_has_started) {
 		if (e != ev_assignment_start)
@@ -483,19 +483,19 @@ void _free_nodes_recursive(conf_node_t* first)
 	}
 }
 
-void conf_cleanup(conf_t* c)
+void conf_cleanup(sdtlconf_ctx_t* c)
 {
 	_free_nodes_recursive((conf_node_t*)c->root.value);
 	free(c->root.value);
-	memset(c, 0, sizeof(conf_t));
+	memset(c, 0, sizeof(sdtlconf_ctx_t));
 }
 
-int conf_read_fd(conf_t* c, int fd)
+int conf_read_fd(sdtlconf_ctx_t* c, int fd)
 {
 	sdtl_read_fd_t rfd;
 	sdtl_read_flags_t opts;
 
-	memset(c, 0, sizeof(conf_t));
+	memset(c, 0, sizeof(sdtlconf_ctx_t));
 	memset(&opts, 0, sizeof(sdtl_read_flags_t));
 	opts.on_event = &_on_sdtl_event;
 	opts.userdata = c;
@@ -514,7 +514,7 @@ int conf_read_fd(conf_t* c, int fd)
 	return 0;
 }
 
-int conf_read(conf_t* c, const char* filename)
+int conf_read(sdtlconf_ctx_t* c, const char* filename)
 {
 	int fd;
 
@@ -540,7 +540,7 @@ _get_conf_node_flat(const conf_node_t* parent_struct, const char* name)
 	return e;
 }
 
-const conf_node_t* conf_get_conf_node(const conf_t* c, const char* path)
+const conf_node_t* conf_get_conf_node(const sdtlconf_ctx_t* c, const char* path)
 {
 	char* abspath, *component, *temp;
 	const conf_node_t* first = (const conf_node_t*)c->root.value;
@@ -598,7 +598,7 @@ const conf_node_t* conf_get_conf_node(const conf_t* c, const char* path)
 	return r;
 }
 
-const char* conf_get_utf8string_by_key(const conf_t* c, const char* key)
+const char* conf_get_utf8string_by_key(const sdtlconf_ctx_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 
@@ -615,7 +615,7 @@ const char* conf_get_utf8string_by_key(const conf_t* c, const char* key)
 		return 0;
 }
 
-const char* conf_get_enum_by_key(const conf_t* c, const char* key)
+const char* conf_get_enum_by_key(const sdtlconf_ctx_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 
@@ -633,7 +633,7 @@ const char* conf_get_enum_by_key(const conf_t* c, const char* key)
 }
 
 const char** conf_get_utf8string_array_by_key
-(const conf_t* c, const char* key, uint64_t* rows, uint64_t* columns)
+(const sdtlconf_ctx_t* c, const char* key, uint64_t* rows, uint64_t* columns)
 {
 	const conf_node_t* key_node = 0;
 
@@ -655,7 +655,7 @@ const char** conf_get_utf8string_array_by_key
 		return 0;
 }
 
-const int64_t* conf_get_int64_by_key(const conf_t* c, const char* key)
+const int64_t* conf_get_int64_by_key(const sdtlconf_ctx_t* c, const char* key)
 {
 	const conf_node_t* key_node = 0;
 
@@ -673,7 +673,7 @@ const int64_t* conf_get_int64_by_key(const conf_t* c, const char* key)
 }
 
 const int64_t** conf_get_int64_array_by_key
-(const conf_t* c, const char* key, uint64_t* rows, uint64_t* columns)
+(const sdtlconf_ctx_t* c, const char* key, uint64_t* rows, uint64_t* columns)
 {
 	const conf_node_t* key_node = 0;
 

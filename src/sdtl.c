@@ -1728,7 +1728,6 @@ int sdtl_open_read
 	_ignore_whitespace_in(_after_state[copy_unit_byte]);
 	_disallow_ascii_control_in(_after_state[copy_unit_byte]);
 	_after_state[copy_unit_byte][(int)'#'] = &_do_comment_intro;
-	_after_state[copy_unit_byte][(int)';'] = &_do_value_outro;
 	_after_state[copy_unit_byte][(int)'>'] = &_do_type_outro;
 	/* disallow unit containing following */
 	_after_state[copy_unit_byte][(int)'.'] = 0;

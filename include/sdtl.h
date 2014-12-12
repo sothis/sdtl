@@ -44,7 +44,7 @@ public functions:
  */
 
 #if !defined(_WIN32)
-	#define _POSIX_C_SOURCE	200112L
+//	#define _POSIX_C_SOURCE	200112L
 	#define _GNU_SOURCE 1
 	#define _BSD_SOURCE 1
 	#include <stdint.h>

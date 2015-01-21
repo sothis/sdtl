@@ -2336,6 +2336,9 @@ int sdtl_write_end_octet_stream
 	if (_write_end_assignment(w))
 		return -1;
 
+	if (sdtl_flush(w))
+		return -1;
+
 	return 0;
 }
 

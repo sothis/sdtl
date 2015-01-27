@@ -267,6 +267,8 @@ typedef int (*action_t)(struct sdtl_read_fd* p);
 typedef struct sdtl_write_fd {
 	uint64_t	struct_nesting_level;
 	int		fd;
+	int		dbg_fd;
+	int		use_dbg_fd;
 	int		white;
 	int		last_was_struct;
 	int		octet_stream;
@@ -1874,11 +1876,15 @@ int sdtl_open_read
 }
 
 void sdtl_open_write
-(sdtl_write_fd_t* w, int fd, int with_whitespace)
+(sdtl_write_fd_t* w, int fd, int* debug_fd)
 {
 	memset(w, 0, sizeof(sdtl_write_fd_t));
 	w->fd = fd;
-	w->white = with_whitespace;
+	if (debug_fd) {
+		w->dbg_fd = *debug_fd;
+		w->use_dbg_fd = 1;
+		w->white = 1;
+	}
 }
 
 int sdtl_flush
@@ -1889,8 +1895,13 @@ int sdtl_flush
 	if (len) {
 		r = write(w->fd, w->buffer, len);
 		((uint32_t)r == len) ? (r = 0) : (r = -1);
+		if (w->use_dbg_fd) {
+			r = write(w->dbg_fd, w->buffer, len);
+			((uint32_t)r == len) ? (r = 0) : (r = -1);
+		}
 		w->next_byte = 0;
 	}
+
 	return r;
 }
 
@@ -2333,6 +2344,9 @@ int sdtl_write_end_octet_stream
 	if (write(w->fd, (unsigned char*)&zero, 3) != 3)
 		return -1;
 
+	if (w->use_dbg_fd && (write(w->dbg_fd, "zzz", 3) != 3))
+		return -1;
+
 	if (_write_end_assignment(w))
 		return -1;
 
@@ -2354,10 +2368,22 @@ int sdtl_write_chunk
 	 * portable */
 	if (write(w->fd, (unsigned char*)&zero, 1) != 1)
 		return -1;
+
+	if (w->use_dbg_fd && (write(w->dbg_fd, "o", 1) != 1))
+		return -1;
+
 	/* TODO: make this little endian _always_ */
 	if (write(w->fd, (unsigned char*)&len, 2) != 2)
 		return -1;
+
+	if (w->use_dbg_fd && (write(w->dbg_fd, "ss", 2) != 2))
+		return -1;
+
 	if (write(w->fd, data, len) != len)
 		return -1;
+
+	if (w->use_dbg_fd && (write(w->dbg_fd, "<chunk data>", 12) != 12))
+		return -1;
+
 	return 0;
 }

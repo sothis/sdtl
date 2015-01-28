@@ -52,6 +52,7 @@ public functions:
 	#include <stdlib.h>
 	#include <fcntl.h>
 	#include <unistd.h>
+	#include <errno.h>
 #else
 	#if defined(_MSC_VER)
 		/* unreferenced inline removed */

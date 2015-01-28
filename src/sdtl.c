@@ -174,6 +174,7 @@ typedef enum value_unit_e {
 } value_unit_t;
 
 typedef enum sdtl_event_e {
+	ev_sdtl_stream_begin,
 	ev_assignment_start,
 	ev_octet_stream_start,
 	ev_octet_stream_end,
@@ -1374,6 +1375,11 @@ int sdtl_read
 	const uint16_t	bufsize = 8192;
 	int 		fd = p->fd;
 
+	if (p->opts.on_event(p->userdata, ev_sdtl_stream_begin, 0)) {
+		p->last_error = error_scanner_callback_returned_nonzero;
+		return -1;
+	}
+
 	for(;;) {
 		off = 0;
 
@@ -1875,6 +1881,22 @@ int sdtl_open_read
 	return 0;
 }
 
+static inline int xwrite(int fd, void* data, uint16_t length)
+{
+	uint16_t total = 0;
+	uint16_t written = 0;
+	while (total != length) {
+		written = write(fd, data + total, length - total);
+		if (written <= 0) {
+			if (errno == EINTR)
+				continue;
+			return -1;
+		}
+		total += written;
+	}
+	return 0;
+}
+
 void sdtl_open_write
 (sdtl_write_fd_t* w, int fd, int* debug_fd)
 {
@@ -1893,11 +1915,9 @@ int sdtl_flush
 	int32_t r = 0;
 	uint32_t len = w->next_byte;
 	if (len) {
-		r = write(w->fd, w->buffer, len);
-		((uint32_t)r == len) ? (r = 0) : (r = -1);
+		r = xwrite(w->fd, w->buffer, len);
 		if (w->use_dbg_fd) {
-			r = write(w->dbg_fd, w->buffer, len);
-			((uint32_t)r == len) ? (r = 0) : (r = -1);
+			r = xwrite(w->dbg_fd, w->buffer, len);
 		}
 		w->next_byte = 0;
 	}
@@ -2341,10 +2361,10 @@ int sdtl_write_end_octet_stream
 		return -1;
 	w->octet_stream = 0;
 
-	if (write(w->fd, (unsigned char*)&zero, 3) != 3)
+	if(xwrite(w->fd, (unsigned char*)&zero, 3))
 		return -1;
 
-	if (w->use_dbg_fd && (write(w->dbg_fd, "zzz", 3) != 3))
+	if (w->use_dbg_fd && xwrite(w->dbg_fd, "zzz", 3))
 		return -1;
 
 	if (_write_end_assignment(w))
@@ -2366,23 +2386,23 @@ int sdtl_write_chunk
 
 	/* TODO: we might want to use writev() here, but it is less
 	 * portable */
-	if (write(w->fd, (unsigned char*)&zero, 1) != 1)
+	if(xwrite(w->fd, (unsigned char*)&zero, 1))
 		return -1;
 
-	if (w->use_dbg_fd && (write(w->dbg_fd, "o", 1) != 1))
+	if (w->use_dbg_fd && xwrite(w->dbg_fd, "o", 1))
 		return -1;
 
 	/* TODO: make this little endian _always_ */
-	if (write(w->fd, (unsigned char*)&len, 2) != 2)
+	if (xwrite(w->fd, (unsigned char*)&len, 2))
 		return -1;
 
-	if (w->use_dbg_fd && (write(w->dbg_fd, "ss", 2) != 2))
+	if (w->use_dbg_fd && xwrite(w->dbg_fd, "ss", 2))
 		return -1;
 
-	if (write(w->fd, data, len) != len)
+	if (xwrite(w->fd, data, len))
 		return -1;
 
-	if (w->use_dbg_fd && (write(w->dbg_fd, "<chunk data>", 12) != 12))
+	if (w->use_dbg_fd && xwrite(w->dbg_fd, "<chunk data>", 12))
 		return -1;
 
 	return 0;

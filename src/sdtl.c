@@ -253,6 +253,9 @@ typedef struct sdtl_read_fd {
 	error_code_t		last_error;
 	int			fd;
 
+	int			dbg_fd;
+	int			use_dbg_fd;
+
 	uint8_t			bom_len;
 	uint8_t			type_len;
 	uint8_t			unit_len;
@@ -330,6 +333,23 @@ value_type_t _get_value_type(const unsigned char* type)
 }
 
 action_t _after_state[dimension_state][uint8_max+1];
+
+
+static inline int xwrite(int fd, void* data, uint16_t length)
+{
+	uint16_t total = 0;
+	uint16_t written = 0;
+	while (total != length) {
+		written = write(fd, data + total, length - total);
+		if (written <= 0) {
+			if (errno == EINTR)
+				continue;
+			return -1;
+		}
+		total += written;
+	}
+	return 0;
+}
 
 int _finalize_binary_chunk
 (sdtl_read_fd_t* p, unsigned char* data, uint16_t length)
@@ -1434,6 +1454,9 @@ int sdtl_read
 			if (off) {
 				goto process_remaining;
 			}
+		} else if (p->dbg_fd) {
+			if (xwrite(p->dbg_fd, data, nb))
+				return -1;
 		}
 	}
 	return nb;
@@ -1472,7 +1495,7 @@ void _disallow_ascii_control_in
 }
 
 int sdtl_open_read
-(sdtl_read_fd_t* r, int fd, sdtl_read_flags_t* options)
+(sdtl_read_fd_t* r, int fd, int* dbg_fd, sdtl_read_flags_t* options)
 {
 	int i;
 
@@ -1482,6 +1505,8 @@ int sdtl_open_read
 	r->next_state = undefined;
 	r->last_error = error_none;
 	r->fd = fd;
+	if (dbg_fd)
+		r->dbg_fd = *dbg_fd;
 
 	if (!options || !options->on_event)
 		return -1;
@@ -1878,22 +1903,6 @@ int sdtl_open_read
 	_ignore_whitespace_in(_after_state[octet_stream_outro]);
 	_after_state[octet_stream_outro][(int)'#'] = &_do_comment_intro;
 	_after_state[octet_stream_outro][(int)';'] = &_do_value_outro;
-	return 0;
-}
-
-static inline int xwrite(int fd, void* data, uint16_t length)
-{
-	uint16_t total = 0;
-	uint16_t written = 0;
-	while (total != length) {
-		written = write(fd, data + total, length - total);
-		if (written <= 0) {
-			if (errno == EINTR)
-				continue;
-			return -1;
-		}
-		total += written;
-	}
 	return 0;
 }
 

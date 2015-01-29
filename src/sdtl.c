@@ -1407,6 +1407,7 @@ int sdtl_read
 		if (nb <= 0) {
 			if (nb < 0) {
 				p->last_error = error_reading_from_source_fd;
+				return -1;
 			} else {
 				/* The file has ended or the remote side
 				 * of the pipe has shutdown its corresponding

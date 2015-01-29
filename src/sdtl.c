@@ -2364,9 +2364,6 @@ int sdtl_write_end_octet_stream
 	if(xwrite(w->fd, (unsigned char*)&zero, 3))
 		return -1;
 
-	if (w->use_dbg_fd && xwrite(w->dbg_fd, "zzz", 3))
-		return -1;
-
 	if (_write_end_assignment(w))
 		return -1;
 
@@ -2389,20 +2386,14 @@ int sdtl_write_chunk
 	if(xwrite(w->fd, (unsigned char*)&zero, 1))
 		return -1;
 
-	if (w->use_dbg_fd && xwrite(w->dbg_fd, "o", 1))
-		return -1;
-
 	/* TODO: make this little endian _always_ */
 	if (xwrite(w->fd, (unsigned char*)&len, 2))
-		return -1;
-
-	if (w->use_dbg_fd && xwrite(w->dbg_fd, "ss", 2))
 		return -1;
 
 	if (xwrite(w->fd, data, len))
 		return -1;
 
-	if (w->use_dbg_fd && xwrite(w->dbg_fd, "<chunk data>", 12))
+	if (w->use_dbg_fd && xwrite(w->dbg_fd, "^", 1))
 		return -1;
 
 	return 0;

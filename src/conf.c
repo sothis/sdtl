@@ -381,7 +381,7 @@ int _on_sdtl_event(void* userdata, sdtl_event_t e, sdtl_data_t* data)
 	sdtlconf_ctx_t* c = (sdtlconf_ctx_t*)userdata;
 
 	if (!c->sdtl_stream_has_started) {
-		if (e != ev_assignment_start)
+		if (e != ev_sdtl_stream_begin)
 			return -1;
 		c->root.type = node_is_struct;
 		c->root.name = (char*)(const char*)"";
@@ -398,6 +398,8 @@ int _on_sdtl_event(void* userdata, sdtl_event_t e, sdtl_data_t* data)
 	}
 
 	switch (e) {
+		case ev_sdtl_stream_begin:
+			break;
 		case ev_assignment_start:
 			c->current_array_items = 0;
 			_increase_current_struct_member_count(c);
@@ -502,7 +504,7 @@ int conf_read_fd(sdtlconf_ctx_t* c, int fd)
 	opts.max_struct_nesting = _CONF_MAX_STRUCT_NESTING;
 	opts.max_file_size = opts.max_text_bytes = _CONF_MAX_FILESIZE_BYTES;
 
-	if (sdtl_open_read(&rfd, fd, &opts)) {
+	if (sdtl_open_read(&rfd, fd, 0, &opts)) {
 		return -1;
 	}
 	if (sdtl_read(&rfd)) {

@@ -1219,12 +1219,12 @@ int _stream_read_all_chunks
 
 /* synchronize read strategy */
 int32_t _stream_synchronize
-(sdtl_read_fd_t* p, unsigned char* data, int32_t length, int32_t bin_start)
+(sdtl_read_fd_t* p, unsigned char* data, size_t length, off_t bin_start)
 {
 	unsigned char tmp[2];
 	uint16_t chunksize = 0;
-	int32_t bytes_after_chunksize;
-	int32_t chunkstart_off;
+	off_t bytes_after_chunksize;
+	off_t chunkstart_off;
 	unsigned char* chunkstart;
 
 	next_chunk_in_buffer:
@@ -1375,9 +1375,9 @@ err_out:
 
 /* feed statemachine, handle binary stream start */
 int _interpret_buffer
-(sdtl_read_fd_t* p, unsigned char* data, uint16_t len, int32_t* pos)
+(sdtl_read_fd_t* p, unsigned char* data, size_t len, off_t* pos)
 {
-	int32_t idx = 0;
+	size_t idx = 0;
 
 	*pos = 0;
 	if (p->next_state == octet_stream_intro) {
@@ -1411,9 +1411,9 @@ int _interpret_buffer
 int sdtl_read
 (sdtl_read_fd_t* p)
 {
-	int32_t		nb;
-	int32_t		bin;
-	int32_t		off;
+	ssize_t		nb;
+	off_t		bin;
+	off_t		off;
 	unsigned char	data[SDTL_READ_BUFFER_SIZE];
 	int 		fd = p->fd;
 
@@ -1467,7 +1467,7 @@ int sdtl_read
 		}
 
 		process_remaining:
-		if (_interpret_buffer(p, data+off, (uint16_t)(nb-off), &bin))
+		if (_interpret_buffer(p, data+off, nb-off, &bin))
 			return -1;
 		if (bin) {
 			off = _stream_synchronize(p, data, nb, bin+off);

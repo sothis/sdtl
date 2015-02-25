@@ -1,3 +1,27 @@
+/*
+ * TODO:
+ *
+ * The octet stream feature of SDTL is currently implemented as such:
+ * <var> = {0x00} {l}{h} <chunk data> {l}{h} <chunk data> {0x00} {0x00} {0x00}
+ * with l and h being the little endian representation of the chunksize
+ * of that chunk, which follows directly afterwards.
+ * The problem with this solution is, that the chunksize can't be 65536.
+ *
+ * ideas:
+ *	- represent the chunksize of 65536 as {0x00}{0x00}. the problem with
+ *	  that is, that it would make the end marker ({0x00}{0x00}{0x00})
+ *	  ambiguous
+ *	- make chunksize 4 byte wide. it would add 2 additional bytes per chunk
+ *	  to the stream and we would have to define a wider end marker
+ *	- add one byte preceding the chunksize, which is used as a tag
+ *	  (comparable to TLV encoding in ASN.1/DER) to differ between chunksize
+ *	  ({0x00}{0x00} would be interpreted then as 65536) and octet stream
+ *	  end marker. this would add 1 additional byte per chunk
+ *
+*/
+
+
+
 #define uint8_max	((uint8_t)~0)
 #define uint16_max	((uint16_t)~0)
 #define uint32_max	((uint32_t)~0ul)

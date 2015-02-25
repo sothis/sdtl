@@ -20,7 +20,7 @@
  *
 */
 
-
+#define SDTL_READ_BUFFER_SIZE	65536
 
 #define uint8_max	((uint8_t)~0)
 #define uint16_max	((uint16_t)~0)
@@ -1414,9 +1414,7 @@ int sdtl_read
 	int32_t		nb;
 	int32_t		bin;
 	int32_t		off;
-	/* 8192 is a good value here */
-	unsigned char	data[8192];
-	const uint16_t	bufsize = 8192;
+	unsigned char	data[SDTL_READ_BUFFER_SIZE];
 	int 		fd = p->fd;
 
 	if (p->opts.on_event(p->userdata, ev_sdtl_stream_begin, 0)) {
@@ -1427,7 +1425,7 @@ int sdtl_read
 	for(;;) {
 		off = 0;
 
-		nb = read(fd, data, bufsize);
+		nb = read(fd, data, SDTL_READ_BUFFER_SIZE);
 		if (nb <= 0) {
 			if (nb < 0) {
 				p->last_error = error_reading_from_source_fd;

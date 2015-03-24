@@ -122,7 +122,7 @@ DEFINES		+= -D__$(TOOLCHAIN)__=1
 
 # toolchain configuration
 # common flags
-CFLAGS		:= -Wall
+CFLAGS		:= -Wall -g
 
 ifeq ($(TOOLCHAIN), gcc)
 ifeq ($(GCC_MAJOR), 4)
@@ -140,7 +140,7 @@ CFLAGS		+= -m32
 endif
 
 ifdef DEBUG
-CFLAGS		+= -O0 -g
+CFLAGS		+= -O0
 endif
 
 ifdef RELEASE

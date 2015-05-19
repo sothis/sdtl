@@ -106,6 +106,7 @@ INCLUDES	+= -I./include
 #SRC		+= ./src/version.c
 #.PHONY: ./src/version.c
 
+SRC		+= ./src/sdtl.c
 SRC		+= ./src/conf_test.c
 
 ################################################################################

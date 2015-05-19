@@ -1,43 +1,4 @@
-typedef enum conf_array_type {
-	array_contains_null,
-	array_contains_long_long_int,
-	array_contains_char,
-
-	dimension_conf_array_type
-} conf_array_type_t;
-
-typedef enum conf_node_type {
-	node_is_null,
-	node_is_string,
-	node_is_enum,
-	node_is_integer,
-	node_is_struct,
-	node_is_array,
-
-	dimension_conf_node_type
-} conf_node_type_t;
-
-typedef struct conf_node {
-	conf_node_type_t	type;
-	conf_array_type_t	array_type;
-	char*			name;
-	void*			value;
-	uint64_t		length;
-	uint64_t		items_per_row;
-	int			struct_is_not_finalized;
-	struct conf_node*	prev_in_scope;
-	struct conf_node*	next_in_scope;
-} conf_node_t;
-
-typedef struct sdtlconf_ctx {
-	int		sdtl_stream_has_started;
-	conf_node_t	root;
-	conf_node_t*	workspace;
-	uint64_t	current_array_items;
-	uint64_t	nopen_scopes;
-	conf_node_t*	open_scopes[_CONF_MAX_STRUCT_NESTING+1];
-} sdtlconf_ctx_t;
-
+#include "conf.h"
 
 void _indent_with_tab(size_t level)
 {

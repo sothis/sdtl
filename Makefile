@@ -1,4 +1,4 @@
-PROJECT_NAME	:= sdtlconfig
+PROJECT_NAME	:= sdtl
 
 VERSION		:= $(shell ./version)
 UNAMEEXISTS	:= $(shell uname > /dev/null 2>&1; echo $$?)
@@ -108,7 +108,7 @@ INCLUDES	+= -I./include
 
 SRC		+= ./src/sdtl.c
 SRC		+= ./src/conf.c
-SRC		+= ./src/conf_test.c
+CLI_SRC		+= ./src/conf_test.c
 
 ################################################################################
 
@@ -193,10 +193,16 @@ CLI_C_SRC	:= $(filter %.c, $(CLI_SRC))
 
 DEPS		:= $(patsubst %.c, $(BUILDDIR)/.obj/%_C.dep, $(C_SRC))
 DEPS		+= $(patsubst %.cpp, $(BUILDDIR)/.obj/%_CXX.dep, $(CXX_SRC))
+DEPS		+= $(patsubst %.c, $(BUILDDIR)/.obj/%_C_PIC.dep, $(C_SRC))
+DEPS		+= $(patsubst %.cpp, $(BUILDDIR)/.obj/%_CXX_PIC.dep, $(CXX_SRC))
 DEPS		+= $(patsubst %.c, $(BUILDDIR)/.obj/%_C.dep, $(CLI_C_SRC))
 
 OBJECTS		:= $(patsubst %.c, $(BUILDDIR)/.obj/%_C.o, $(C_SRC))
 OBJECTS		+= $(patsubst %.cpp, $(BUILDDIR)/.obj/%_CXX.o, $(CXX_SRC))
+
+OBJECTS_PIC	:= $(OBJECTS)
+
+OBJECTS_CLI	:= $(patsubst %.c, $(BUILDDIR)/.obj/%_C.o, $(CLI_C_SRC))
 
 # tools
 INSTALL		:= install
@@ -290,26 +296,21 @@ ifdef HAVE_ICC
 	$(MAKE) $(VERB) -C . TOOLCHAIN=icc final-all-recursive
 endif
 
-final-all-recursive: $(BUILDDIR)/$(PROJECT_NAME)
+final-all-recursive:				\
+	$(BUILDDIR)/$(PROJECT_NAME).a		\
+	$(BUILDDIR)/$(PROJECT_NAME)_pic.a	\
+	$(BUILDDIR)/sdtlconf
+
 
 install-recursive:
 	$(print_inst) $(PROJECT_NAME)
-	-mkdir -p $(DESTDIR)/usr/bin
-	-mkdir -p $(DESTDIR)/etc/egvpbridge
-	$(INSTALL) -s -p -m 0755 -t $(DESTDIR)/usr/bin \
-		$(BUILDDIR)/$(PROJECT_NAME)
-	$(INSTALL) -p -m 0600 -t $(DESTDIR)/etc/egvpbridge \
-		conf/egvpbridge.conf
-	$(INSTALL) -p -m 0600 -t $(DESTDIR)/etc/egvpbridge \
-		conf/text.xsl
-	$(INSTALL) -p -m 0600 -t $(DESTDIR)/etc/egvpbridge \
-		conf/html.xsl
+	# do nothing
 
 deb:
 	dpkg-buildpackage -b -D -us -uc
 .PHONY: deb
 
-$(BUILDDIR)/$(PROJECT_NAME): $(OBJECTS) $(EXPLICIT_LIBS)
+$(BUILDDIR)/sdtlconf: $(OBJECTS_CLI) $(BUILDDIR)/$(PROJECT_NAME).a
 	$(print_ld) $(subst $(PWD)/,./,$(abspath $(@)))
 	@-mkdir -p $(dir $(@))
 ifdef PLAT_DARWIN
@@ -317,8 +318,30 @@ ifdef PLAT_DARWIN
 	$(LPATH) $(FRAMEWORKS) -o $(@) $(^) $(LIBRARIES)
 else
 	@export LD_RUN_PATH='$${ORIGIN}' && $(LD) $(MACARCHS) $(LDFLAGS) \
-	$(LPATH) -o $(@) $(OBJECTS) $(EXPLICIT_LIBS) $(LIBRARIES)
+	$(LPATH) $(FRAMEWORKS) -o $(@) $(^) $(LIBRARIES)
 endif
+
+$(BUILDDIR)/$(PROJECT_NAME).a: $(BUILDDIR)/.obj/$(PROJECT_NAME).ro
+	@$(print_ar) $(subst $(PWD)/,./,$(abspath $(@)))
+	@-mkdir -p $(dir $(@))
+	@$(AR) $(ARFLAGS) $(@) $(^)
+
+$(BUILDDIR)/$(PROJECT_NAME)_pic.a: $(BUILDDIR)/.obj/$(PROJECT_NAME)_pic.ro
+	@$(print_ar) $(subst $(PWD)/,./,$(abspath $(@)))
+	@-mkdir -p $(dir $(@))
+	@$(AR) $(ARFLAGS) $(@) $(^)
+
+$(BUILDDIR)/.obj/$(PROJECT_NAME).ro: $(OBJECTS)
+	@$(print_ld) $(subst $(PWD)/,./,$(abspath $(@)))
+	@-mkdir -p $(dir $(@))
+	$(LD) -nostdlib -Wl,-r $(MACARCHS) $(LDFLAGS) \
+	$(LPATH) $(FRAMEWORKS) -o $(@) $(^)
+
+$(BUILDDIR)/.obj/$(PROJECT_NAME)_pic.ro: $(OBJECTS_PIC)
+	@$(print_ld) $(subst $(PWD)/,./,$(abspath $(@)))
+	@-mkdir -p $(dir $(@))
+	$(LD) -nostdlib -Wl,-r $(MACARCHS) $(LDFLAGS) \
+	$(LPATH) $(FRAMEWORKS) -o $(@) $(^)
 
 $(BUILDDIR)/.obj/%_C.o: %.c
 	$(print_cc) $(subst $(PWD)/,./,$(abspath $(<)))

@@ -117,6 +117,7 @@ CLI_SRC		+= ./src/conf_test.c
 ifdef RELEASE
 DEFINES		+= -DNDEBUG
 endif
+DEFINES		+= -D_DEFAULT_SOURCE=1
 DEFINES		+= -D__$(PLATFORM)__=1
 DEFINES		+= -DVERSION='"$(VERSION)"'
 DEFINES		+= -D__$(TOOLCHAIN)__=1
@@ -181,7 +182,7 @@ endif
 ifdef PLAT_DARWIN
 ARFLAGS		:= -static -o
 else
-ARFLAGS		:= cru
+ARFLAGS		:= cr
 STRIPFLAGS	:= -s
 endif
 
